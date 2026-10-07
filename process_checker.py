@@ -56,6 +56,7 @@ def _start_python_processes() -> None:
 
 
 def start_processes() -> None:
+    print("Starting all the processes...")
     _start_max_process()
     _start_python_processes()
 
@@ -99,10 +100,9 @@ def check_processes() -> None:
         # Wait before executing the new check...
         time.sleep(0.1)
 
-    print("Restarting the service...")
-
 
 def kill_processes() -> None:
+    print("Killing all the processes...")
     for p in psutil.process_iter():
         try:
             process_id = p.pid
