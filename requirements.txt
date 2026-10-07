@@ -1,1 +1,3 @@
 psutil
+pykinect2 @ git+https://github.com/rodolfocangiotti/PyKinect2
+python-osc
