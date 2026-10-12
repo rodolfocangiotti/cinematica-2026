@@ -1,7 +1,7 @@
-import copy
 import ctypes
 import os
 import time
+import traceback
 from typing import Optional
 
 import numpy as np
@@ -98,15 +98,17 @@ def get_cluster_size(body_frame: PyKinectV2.KinectBodyFrameData) -> float:
                 continue  # Consider only tracked joints...
             valid_positions.append(joint.Position)
 
-    max_x = max(p.x for p in valid_positions)
-    max_y = max(p.y for p in valid_positions)
-    max_z = max(p.z for p in valid_positions)
-    min_x = min(p.x for p in valid_positions)
-    min_y = min(p.y for p in valid_positions)
-    min_z = min(p.z for p in valid_positions)
-    # Returns the volume of the sferoid, whose width, height and depth are calcultated...
-    # ...from the difference between extreme points on a certain dimension.
-    return (max_x - min_x) * (max_y - min_y) * (max_z - min_z) * PI_SIXTH
+    if valid_positions:
+        max_x = max(p.x for p in valid_positions)
+        max_y = max(p.y for p in valid_positions)
+        max_z = max(p.z for p in valid_positions)
+        min_x = min(p.x for p in valid_positions)
+        min_y = min(p.y for p in valid_positions)
+        min_z = min(p.z for p in valid_positions)
+        # Returns the volume of the sferoid, whose width, height and depth are calcultated...
+        # ...from the difference between extreme points on a certain dimension.
+        return (max_x - min_x) * (max_y - min_y) * (max_z - min_z) * PI_SIXTH
+    return 0.0
 
 
 def get_cluster_energy(
@@ -129,12 +131,14 @@ def get_cluster_energy(
     energy = 0.0
     for position_id, value in valid_positions.items():
         previous_value = cluster_history.get(position_id, value)
-        difference = abs(value - previous_value)
+        difference = np.sqrt((value.x - previous_value.x) * (value.x - previous_value.x) + \
+                             (value.y - previous_value.y) * (value.y - previous_value.y) + \
+                             (value.z - previous_value.z) * (value.z - previous_value.z))
         energy += difference
         cluster_history[position_id] = value
 
     # Clear history for missing positions...
-    for k in copy.deepcopy(cluster_history.keys()):
+    for k in tuple(cluster_history.keys()):
         if k not in valid_positions:
             cluster_history.pop(k)
     return energy
@@ -196,7 +200,7 @@ def main():
                 # Reset all pads...
                 is_pad_triggered = {pad_id: False for pad_id in is_pad_triggered}
 
-                for body in body_frame:
+                for body in body_frame.bodies:
                     if not body.is_tracked:
                         # Skip current body...
                         continue
@@ -216,11 +220,13 @@ def main():
             for pad_id, value in is_pad_triggered.items():
                 udp.send_message(eval(f"PAD_{pad_id}_TRIGGER"), int(value))
 
+            print(f"c. size: {cluster_size} - c. energy: {cluster_energy} - pads: {tuple(is_pad_triggered.values())}")
+
             time.sleep(0.01)
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        print(e)
+    except Exception:
+        print(traceback.format_exc())
 
     print("Exiting...")
     kinect.close()
