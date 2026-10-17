@@ -88,20 +88,22 @@ OSC_TARGET_PORT = os.environ.get("OSC_TARGET_PORT", 9000)
 
 CLUSTER_SIZE = "/cluster/size"
 CLUSTER_ENERGY = "/cluster/energy"
-PAD_1_TRIGGER = "/pad/1/enabled"
-PAD_2_TRIGGER = "/pad/2/enabled"
-PAD_3_TRIGGER = "/pad/3/enabled"
-PAD_4_TRIGGER = "/pad/4/enabled"
-PAD_5_TRIGGER = "/pad/5/enabled"
-PAD_6_TRIGGER = "/pad/6/enabled"
-OSC_ADDRESS_PER_PAD_ID_MAP = {
-    1: PAD_1_TRIGGER,
-    2: PAD_2_TRIGGER,
-    3: PAD_3_TRIGGER,
-    4: PAD_4_TRIGGER,
-    5: PAD_5_TRIGGER,
-    6: PAD_6_TRIGGER,
-}
+
+PAD_TRIGGER_PATTERN = "/pad/{}/enabled"
+BODY_TRIGGER_PATTERN = "/body/{}/enabled"
+BODY_DISTANCE_PATTERN = "/body/{}/distance"
+
+
+def get_pad_trigger_osc_address_from_pad_id(pad_id: int) -> str:
+    return PAD_TRIGGER_PATTERN.format(pad_id)
+
+
+def get_body_trigger_osc_address_from_body_id(body_id: int) -> str:
+    return BODY_TRIGGER_PATTERN.format(body_id)
+
+
+def get_body_distance_osc_address_from_body_id(body_id: int) -> str:
+    return BODY_DISTANCE_PATTERN.format(body_id)
 
 
 def get_tracked_joint_positions(body_frame: PyKinectV2.KinectBodyFrameData) -> dict:
@@ -202,6 +204,40 @@ def compute_pad_activations(body_centroids: dict) -> dict:
     return pad_activations
 
 
+def infer_body_activations(body_centroids: dict) -> dict:
+    result = {
+        1: False,
+        2: False,
+        3: False,
+        4: False,
+        5: False,
+        6: False,
+    }
+    # Sort bodies by tracking ID...
+    sorted_bodies = sorted(list(body_centroids.items()), key=lambda x: x[0])
+    # Generate a raw body ID...
+    for raw_id, _ in enumerate(sorted_bodies, start=1):
+        result[raw_id] = True
+    return result
+
+
+def infer_body_distances(body_centroids: dict) -> dict:
+    result = {
+        1: False,
+        2: False,
+        3: False,
+        4: False,
+        5: False,
+        6: False,
+    }
+    # Sort bodies by tracking ID...
+    sorted_bodies = sorted(list(body_centroids.items()), key=lambda x: x[0])
+    # Generate a raw body ID...
+    for raw_id, (_, centroid) in enumerate(sorted_bodies, start=1):
+        result[raw_id] = centroid.z
+    return result
+
+
 def main():
     print("Starting Kinect interface...")
 
@@ -219,6 +255,22 @@ def main():
         5: False,
         6: False,
     }
+    body_activations = {
+        1: False,
+        2: False,
+        3: False,
+        4: False,
+        5: False,
+        6: False,
+    }
+    body_distances = {
+        1: 0.0,
+        2: 0.0,
+        3: 0.0,
+        4: 0.0,
+        5: 0.0,
+        6: 0.0,
+    }
 
     previous_joints = {}
     try:
@@ -233,6 +285,8 @@ def main():
                 cluster_energy = compute_cluster_energy(tracked_joints, previous_joints)
                 body_centroids = compute_body_centroids(tracked_joints)
                 pad_activations = compute_pad_activations(body_centroids)
+                body_activations = infer_body_activations(body_centroids)
+                body_distances = infer_body_distances(body_centroids)
 
                 previous_joints = tracked_joints
 
@@ -240,8 +294,14 @@ def main():
             udp.send_message(CLUSTER_SIZE, cluster_size)
             udp.send_message(CLUSTER_ENERGY, cluster_energy)
             for pad_id, value in pad_activations.items():
-                osc_address = OSC_ADDRESS_PER_PAD_ID_MAP[pad_id]
+                osc_address = get_pad_trigger_osc_address_from_pad_id(pad_id)
                 udp.send_message(osc_address, int(value))
+            for body_id, value in body_activations.items():
+                osc_address = get_body_trigger_osc_address_from_body_id(body_id)
+                udp.send_message(osc_address, int(value))
+            for body_id, value in body_distances.items():
+                osc_address = get_body_distance_osc_address_from_body_id(body_id)
+                udp.send_message(osc_address, value)
 
             time.sleep(0.01)
     except KeyboardInterrupt:
