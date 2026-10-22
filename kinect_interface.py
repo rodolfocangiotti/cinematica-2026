@@ -4,8 +4,7 @@ import traceback
 
 import numpy as np
 
-from pykinect2 import PyKinectV2
-from pykinect2 import PyKinectRuntime
+from pykinect2 import PyKinectRuntime, PyKinectV2
 from pythonosc.udp_client import SimpleUDPClient
 
 from utilities import Point2D, Point3D
@@ -55,30 +54,31 @@ if DEBUG:
         ),
     }
 else:
+    # Adaptation for Cinematica space...
     EDGE_POINTS_PER_PAD_ID_MAP = {
         1: (
-            Point2D(-1.5, 2.0),
-            Point2D(-0.5, 3.0),
+            Point2D(-0.2, 2.1),
+            Point2D(0.3, 2.6),
         ),
         2: (
-            Point2D(-0.5, 2.0),
-            Point2D(0.5, 3.0),
+            Point2D(-0.8, 3.4),
+            Point2D(-0.2, 3.6),
         ),
         3: (
-            Point2D(0.5, 2.0),
-            Point2D(1.5, 3.0),
+            Point2D(-1.7, 4.1),
+            Point2D(-1.0, 4.9),
         ),
         4: (
-            Point2D(-1.5, 4.0),
-            Point2D(-0.5, 5.0),
+            Point2D(-0.1, 4.1),
+            Point2D(0.3, 4.9),
         ),
         5: (
-            Point2D(-0.5, 3.0),
-            Point2D(0.5, 4.0),
+            Point2D(1.2, 4.1),
+            Point2D(1.7, 4.9),
         ),
         6: (
-            Point2D(0.5, 3.0),
-            Point2D(1.5, 4.0),
+            Point2D(0.5, 3.4),
+            Point2D(1.0, 3.6),
         ),
     }
 
