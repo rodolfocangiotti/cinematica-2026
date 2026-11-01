@@ -1,6 +1,8 @@
-# Corpus Callosus
+# Corpus Callosum
 ### Audiovisual installation at Cinematica Festival 2026
-This repository provides some components to be used to set up the installation mentioned.
+##### *By L. Giardi, F. Baldisserri, R. Cangiotti, G. Busoni and E. W. Duve, some of students who attended the Digital Performer course at Le Marche Polytechnic University*
+
+This repository provides some components to be used for setting up the installation mentioned. More information about the event could be found [here](https://www.cinematicafestival.eu/programma/) and [here](https://www.comune.ancona.it/it/news/cinematica-festival-xiii-ediz-cinematica-sposta-lattenzione-dallo-sguardo-allascolto-questa-edizione-indaga-il-rapporto-tra-corpo-e-suono).
 
 ## Setup
 Please, follow these steps to setup the main computer of the installation:
